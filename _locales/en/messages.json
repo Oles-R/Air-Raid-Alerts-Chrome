@@ -1,0 +1,11 @@
+{
+  "extName": {
+    "message": "Air Raid Alerts"
+  },
+  "extDescription": {
+    "message": "Real-time monitoring of air raid alerts using api.ukrainealarm.com"
+  },
+  "actionTitle": {
+    "message": "Air Raid Alerts"
+  }
+}

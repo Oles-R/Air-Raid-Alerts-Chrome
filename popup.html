@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Повітряні Тривоги - Україна</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="popup.css">
+    <script src="theme.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <div class="radar"></div>
+                <h1 data-i18n="appName">Повітряні Тривоги</h1>
+            </div>
+            <div class="header-actions">
+                <button id="settings-btn" class="icon-btn" data-i18n-title="settingsBtnTitle" title="Налаштування">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+                <div class="status">
+                    <span id="active-count">0</span>
+                    <span class="status-label" data-i18n="active">активних</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="info-bar">
+            <span><span data-i18n="lastUpdate">Останнє оновлення:</span> <strong id="last-update">...</strong></span>
+        </div>
+
+        <div class="main-content">
+            <div id="loader" class="loader">
+                <div class="spinner"></div>
+                <p data-i18n="loading">Завантаження даних...</p>
+            </div>
+            <div id="error-message" class="error-message hidden" data-i18n="genericLoadError">
+                Помилка завантаження даних.
+            </div>
+            <ul id="regions-list" class="regions-list hidden">
+                <!-- Regions will be injected here -->
+            </ul>
+        </div>
+
+        <footer data-i18n="source">
+            Джерело: api.ukrainealarm.com
+        </footer>
+        
+        <!-- Settings Panel -->
+        <div id="settings-panel" class="settings-panel hidden">
+            <div class="settings-header">
+                <h2 data-i18n="settingsTitle">Налаштування</h2>
+                <button id="close-settings" class="icon-btn" data-i18n-title="closeBtnTitle">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="settings-body">
+                <div class="geo-setting">
+                    <label data-i18n="themeLabel">Тема оформлення</label>
+                    <select id="theme-select">
+                        <option value="system" data-i18n="themeSystem">Системна</option>
+                        <option value="dark" data-i18n="themeDark">Темна</option>
+                        <option value="light" data-i18n="themeLight">Світла</option>
+                    </select>
+                </div>
+
+                <div class="geo-setting">
+                    <label data-i18n="languageLabel">Мова</label>
+                    <select id="language-select">
+                        <option value="system" data-i18n="languageSystem">Системна</option>
+                        <option value="uk" data-i18n="languageUk">Українська</option>
+                        <option value="en" data-i18n="languageEn">English</option>
+                    </select>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border); width: 100%; margin: 8px 0;">
+
+                <div class="geo-setting">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enable-geo">
+                        <span data-i18n="enableGeoLabel">Визначати мій регіон автоматично</span>
+                    </label>
+                    <p class="help-text" id="current-region-display"><span data-i18n="currentRegionPrefix">Поточний регіон:</span> <span id="region-status-value">Не визначено</span></p>
+                </div>
+
+                <div class="geo-setting">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="notify-only-mine">
+                        <span data-i18n="notifyOnlyMineLabel">Сповіщати ТІЛЬКИ про мій регіон/громади</span>
+                    </label>
+                </div>
+
+                <div class="geo-setting">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="hide-others">
+                        <span data-i18n="hideOthersLabel">Приховати інші регіони зі списку</span>
+                    </label>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border); width: 100%; margin: 8px 0;">
+
+                <div class="custom-regions-setting">
+                    <label data-i18n="addRegionLabel">Додати регіон для спостереження (область, район чи громада):</label>
+                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+                        <input type="text" id="custom-region-input" list="regions-datalist" data-i18n-placeholder="addRegionPlaceholder" placeholder="Напр. Київська область, Бучанська..." style="flex: 1;">
+                        <datalist id="regions-datalist"></datalist>
+                        <button id="add-custom-region" class="btn-secondary" data-i18n="addBtn">Додати</button>
+                    </div>
+                    <ul id="custom-regions-list" class="custom-list"></ul>
+                </div>
+
+                <button id="save-settings" class="btn-primary" data-i18n="saveBtn">Зберегти</button>
+                <div id="save-status" class="save-status hidden" data-i18n="savedStatus">Збережено!</div>
+            </div>
+        </div>
+    </div>
+    <script src="constants.js"></script>
+    <script src="icons.js"></script>
+    <script src="translations.js"></script>
+    <script src="i18n.js"></script>
+    <script src="regionUtils.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>

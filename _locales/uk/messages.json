@@ -1,0 +1,11 @@
+{
+  "extName": {
+    "message": "Повітряні Тривоги"
+  },
+  "extDescription": {
+    "message": "Моніторинг повітряних тривог у реальному часі через api.ukrainealarm.com"
+  },
+  "actionTitle": {
+    "message": "Повітряні Тривоги"
+  }
+}
