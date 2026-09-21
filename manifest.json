@@ -4,6 +4,7 @@
   "version": "1.2.0",
   "description": "__MSG_extDescription__",
   "default_locale": "uk",
+  "homepage_url": "https://github.com/Oles-R/Ukraine_Alert_Chrome_Ext",
   "action": {
     "default_popup": "popup.html",
     "default_title": "__MSG_actionTitle__",
