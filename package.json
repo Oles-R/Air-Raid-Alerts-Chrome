@@ -5,6 +5,9 @@
   "author": "Oleksandr Reshetnikov <aleksandr.reshetnikov@gmail.com>",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1"
+  },
   "keywords": [
     "chrome-extension",
     "ukraine",
