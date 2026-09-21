@@ -3,7 +3,6 @@ import {
   ALERT_LEVEL_COLORS, STATUS_ICON_PATHS
 } from '../lib/constants';
 import { resolveAndLoadLanguage, t } from '../lib/i18n';
-import { translateRegionName } from '../lib/regionNames';
 import { isRegionMonitored } from '../lib/regionUtils';
 import type { RegionState, SnapshotPayload, RuntimeMessage, ToastPayload } from '../lib/types';
 
@@ -148,22 +147,20 @@ async function fetchData(): Promise<void> {
         let notifTitle: string;
         let notifMessage = '';
 
-        const displayName = (a: NewAlert) => translateRegionName(lang, a.name);
-
         if (redAlerts.length > 0) {
           notifTitle = t(lang, 'notifTitleRed');
-          const names = redAlerts.slice(0, 3).map(displayName);
+          const names = redAlerts.slice(0, 3).map(a => a.name);
           notifMessage = names.join(', ');
           if (redAlerts.length > 3) notifMessage += t(lang, 'moreItemsSuffix', { n: redAlerts.length - 3 });
-          if (yellowAlerts.length > 0) notifMessage += `\n${t(lang, 'yellowInlinePrefix')}${yellowAlerts.slice(0, 2).map(displayName).join(', ')}`;
+          if (yellowAlerts.length > 0) notifMessage += `\n${t(lang, 'yellowInlinePrefix')}${yellowAlerts.slice(0, 2).map(a => a.name).join(', ')}`;
         } else if (yellowAlerts.length > 0) {
           notifTitle = t(lang, 'notifTitleYellow');
-          const names = yellowAlerts.slice(0, 3).map(displayName);
+          const names = yellowAlerts.slice(0, 3).map(a => a.name);
           notifMessage = names.join(', ');
           if (yellowAlerts.length > 3) notifMessage += t(lang, 'moreItemsSuffix', { n: yellowAlerts.length - 3 });
         } else {
           notifTitle = t(lang, 'notifTitleGeneric');
-          const names = otherAlerts.slice(0, 3).map(displayName);
+          const names = otherAlerts.slice(0, 3).map(a => a.name);
           notifMessage = names.join(', ');
           if (otherAlerts.length > 3) notifMessage += t(lang, 'moreItemsSuffix', { n: otherAlerts.length - 3 });
         }
@@ -182,7 +179,7 @@ async function fetchData(): Promise<void> {
         // Show toast overlay on all active tabs
         const toastLevel: ToastPayload['level'] = redAlerts.length > 0 ? 'red' : (yellowAlerts.length > 0 ? 'yellow' : 'generic');
         const formatToastRegions = (alerts: NewAlert[]) =>
-          alerts.slice(0, 5).map(displayName).join(', ') + (alerts.length > 5 ? t(lang, 'moreItemsSuffix', { n: alerts.length - 5 }) : '');
+          alerts.slice(0, 5).map(a => a.name).join(', ') + (alerts.length > 5 ? t(lang, 'moreItemsSuffix', { n: alerts.length - 5 }) : '');
         const toastRegions = redAlerts.length > 0
           ? formatToastRegions(redAlerts)
           : yellowAlerts.length > 0
