@@ -72,7 +72,7 @@ function setupSettings() {
         if (result.notifyOnlyMine) notifyOnlyMine.checked = true;
         if (result.hideOthers) hideOthers.checked = true;
         if (result.myRegion) {
-            regionDisplay.textContent = result.myRegion;
+            regionDisplay.textContent = translateRegionName(currentLang, result.myRegion);
             currentMyRegion = result.myRegion;
         } else {
             regionDisplay.textContent = t(currentLang, 'regionNotDetermined');
@@ -132,7 +132,7 @@ function setupSettings() {
                         if (region === 'Київ') region = 'м. Київ';
                         else if (region === 'Севастополь') region = 'м. Севастополь';
 
-                        regionDisplay.textContent = region;
+                        regionDisplay.textContent = translateRegionName(currentLang, region);
                         currentMyRegion = region;
                         // Save immediately — otherwise background.js keeps using the
                         // old myRegion until someone clicks "Save" again.
@@ -173,6 +173,7 @@ function setupSettings() {
             setTimeout(() => saveStatus.classList.add('hidden'), 2000);
             chrome.runtime.sendMessage({ action: 'forceUpdate' });
             setTimeout(loadData, 500);
+            settingsPanel.classList.add('hidden');
         });
     });
 }
@@ -329,6 +330,8 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
         }
     });
 
+    regionsToDisplay.forEach((item) => { item.displayName = translateRegionName(currentLang, item.name); });
+
     regionsToDisplay.sort((a, b) => {
         if (a.isMonitored && !b.isMonitored) return -1;
         if (!a.isMonitored && b.isMonitored) return 1;
@@ -336,11 +339,11 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
         if (a.data.alertnow && !b.data.alertnow) return -1;
         if (!a.data.alertnow && b.data.alertnow) return 1;
 
-        return a.name.localeCompare(b.name, LOCALE_TAGS[currentLang]);
+        return a.displayName.localeCompare(b.displayName, LOCALE_TAGS[currentLang]);
     });
 
     regionsToDisplay.forEach((itemInfo) => {
-        const {name, data, isMonitored} = itemInfo;
+        const {displayName, data, isMonitored} = itemInfo;
 
         if (data.alertnow && data.type === 'State') activeCount++;
 
@@ -398,7 +401,7 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
         item.innerHTML = `
             <div class="region-icon ${data.alertnow ? `region-icon--${iconLevelClass}` : 'region-icon--safe'}">${data.alertnow ? ICONS[iconKey] : ''}</div>
             <div class="region-info">
-                <div class="region-name">${isMonitored ? '⭐ ' : ''}${name}</div>
+                <div class="region-name">${isMonitored ? '⭐ ' : ''}${displayName}</div>
                 ${alertLines ? `<div class="region-alert-lines">${alertLines}</div>` : ''}
                 ${metaStr ? `<div class="region-meta">${metaStr}</div>` : ''}
             </div>
