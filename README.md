@@ -17,10 +17,27 @@
 
 ## Встановлення
 
-1. Клонуйте репозиторій або завантажте як ZIP і розпакуйте
-2. Відкрийте `chrome://extensions` у Chrome
-3. Увімкніть **Режим розробника** (перемикач угорі праворуч)
-4. Натисніть **Завантажити розпаковане** і виберіть теку проєкту
+1. Клонуйте репозиторій
+2. `npm install`
+3. `npm run build` — збирає розширення в `dist/`
+4. Відкрийте `chrome://extensions` у Chrome
+5. Увімкніть **Режим розробника** (перемикач угорі праворуч)
+6. Натисніть **Завантажити розпаковане** і виберіть теку `dist/` (не корінь репозиторію — там лежать лише TypeScript-джерела, а не готове розширення)
+
+## Розробка
+
+Розширення написане на TypeScript і збирається [esbuild](https://esbuild.github.io/) у звичайні JS-бандли (MV3 не підтримує TS напряму).
+
+| Команда | Що робить |
+|---|---|
+| `npm run build` | Повний цикл: sync-languages → typecheck → compile → package (`release/*.zip`) |
+| `npm run watch` | esbuild у watch-режимі — перекомпільовує `dist/` на кожну зміну `.ts`. Після зміни треба вручну натиснути "Reload" на сторінці `chrome://extensions` (live-reload у браузері не налаштований) |
+| `npm run typecheck` | Перевірка типів без збірки (`tsc --noEmit`) |
+| `npm run compile` | Тільки esbuild-компіляція `src/` → `dist/` + копіювання `public/` |
+| `npm run sync-languages` | Перегенерувати `public/_locales/languages.json` зі сканованих `messages.json` |
+| `npm run package` | Заархівувати вже зібраний `dist/` у `release/*.zip` (без перекомпіляції) |
+
+`dist/` — це повністю готове, завантажуване розширення (те, що використовує "Завантажити розпаковане"). `release/*.zip` — той самий вміст, запакований для завантаження в Chrome Web Store.
 
 ## Налаштування
 
@@ -31,30 +48,36 @@
 ## Структура проєкту
 
 ```
-manifest.json         — маніфест розширення (MV3)
-background.js         — service worker: опитування API, сповіщення, бейдж/іконка
-popup.html/css/js      — інтерфейс попапа
-content.js             — спливаючі toast-сповіщення на сторінках
-constants.js           — спільні константи (URL, кольори, шляхи іконок)
-icons.js               — SVG-іконки типів тривог
-i18n.js                 — завантаження перекладів і переклад тексту (t())
-theme.js               — перемикання теми оформлення
-regionUtils.js          — логіка визначення "мого регіону"
-icons/                  — іконки розширення (PNG) для різних статусів
-_locales/               — переклади: назва/опис розширення (маніфест) І весь текст інтерфейсу
+src/
+  entries/            — точки входу, кожна збирається в окремий бандл
+    background.ts       — service worker: опитування API, сповіщення, бейдж/іконка
+    content.ts           — спливаючі toast-сповіщення на сторінках
+    popup.ts             — інтерфейс попапа
+    theme.ts             — раннє застосування теми в <head> (проти "спалаху" не тієї теми)
+  lib/                — спільна логіка, імпортується entry-файлами
+    constants.ts, icons.ts, i18n.ts, regionNames.ts, alertReasons.ts,
+    regionUtils.ts, theme.ts, types.ts
+public/               — статичні файли, копіюються в dist/ без змін
+  manifest.json          — маніфест розширення (MV3)
+  popup.html/css
+  icons/                 — іконки розширення (PNG/SVG) для різних статусів
+  _locales/              — переклади: назва/опис розширення (маніфест) І весь текст інтерфейсу
+scripts/build.mjs     — esbuild-конфіг + копіювання public/ у dist/
+dist/                 — зібране розширення (гітигнорено, генерується білдом)
+release/              — запаковані .zip для Chrome Web Store (гітигнорено)
 ```
 
 ## Додавання нового перекладу
 
-Весь текст інтерфейсу (попап, сповіщення, toast) і поля маніфесту (назва, опис) беруться з `_locales/<код мови>/messages.json` — це єдине джерело перекладів.
+Весь текст інтерфейсу (попап, сповіщення, toast) і поля маніфесту (назва, опис) беруться з `public/_locales/<код мови>/messages.json` — це єдине джерело перекладів.
 
 Щоб додати нову мову:
 
-1. Скопіюй `_locales/en/messages.json` у `_locales/<код>/messages.json` (напр. `_locales/pl/messages.json`) і перекладіть значення `"message"` для кожного ключа. Онови також `languageSelfName` — це власна назва мови (напр. `"Polski"`), вона показується у випадаючому списку.
-2. Виконай `npm run sync-languages` — скрипт просканує `_locales/` і перегенерує `_locales/languages.json`.
-3. Все — мова автоматично з'явиться у випадаючому списку налаштувань, а `t()` підхопить нові рядки без правок JS/HTML. `npm run build` викликає `sync-languages` автоматично.
+1. Скопіюй `public/_locales/en/messages.json` у `public/_locales/<код>/messages.json` (напр. `public/_locales/pl/messages.json`) і перекладіть значення `"message"` для кожного ключа. Онови також `languageSelfName` — це власна назва мови (напр. `"Polski"`), вона показується у випадаючому списку.
+2. Виконай `npm run sync-languages` — скрипт просканує `public/_locales/` і перегенерує `public/_locales/languages.json`.
+3. Все — мова автоматично з'явиться у випадаючому списку налаштувань, а `t()` підхопить нові рядки без правок коду. `npm run build` викликає `sync-languages` автоматично.
 
-`_locales/languages.json` — згенерований файл, не редагуй його вручну.
+`public/_locales/languages.json` — згенерований файл, не редагуй його вручну.
 
 ## Дозволи розширення
 
@@ -99,21 +122,65 @@ This is an independent project and is **not** an official app or website of map.
 
 ## Setup
 
-No setup is required to get started — the extension shows data right after installation. No API key needed: all api.ukrainealarm.com requests are made by the `air-raid-alerts-proxy-worker` proxy, and the extension just reads the already-aggregated result from it.
+1. Clone the repo
+2. `npm install`
+3. `npm run build` — builds the extension into `dist/`
+4. Open `chrome://extensions` in Chrome
+5. Enable **Developer mode** (top-right toggle)
+6. Click **Load unpacked** and pick the `dist/` folder (not the repo root — that only holds TypeScript source, not a runnable extension)
+
+## Development
+
+The extension is written in TypeScript and bundled into plain JS with [esbuild](https://esbuild.github.io/) (MV3 doesn't run TypeScript directly).
+
+| Command | What it does |
+|---|---|
+| `npm run build` | Full pipeline: sync-languages → typecheck → compile → package (`release/*.zip`) |
+| `npm run watch` | esbuild in watch mode — recompiles `dist/` on every `.ts` change. You still need to click "Reload" on `chrome://extensions` afterward (no in-browser live-reload is wired up) |
+| `npm run typecheck` | Type-check only, no build (`tsc --noEmit`) |
+| `npm run compile` | esbuild-compile `src/` → `dist/` and copy `public/`, nothing else |
+| `npm run sync-languages` | Regenerate `public/_locales/languages.json` from the `messages.json` files found |
+| `npm run package` | Zip the already-built `dist/` into `release/*.zip`, no recompile |
+
+`dist/` is a fully loadable extension (what "Load unpacked" points at). `release/*.zip` is the same content, packaged for the Chrome Web Store.
+
+No setup is required to get started beyond the build — the extension shows data right after installation. No API key needed: all api.ukrainealarm.com requests are made by the `air-raid-alerts-proxy-worker` proxy, and the extension just reads the already-aggregated result from it.
 
 Optionally, in Settings you can enable automatic region detection, add specific regions to watch, and pick a language/theme.
 
+## Project structure
+
+```
+src/
+  entries/            — one file per bundled output
+    background.ts       — service worker: polls the API, notifications, badge/icon
+    content.ts           — on-page toast alerts
+    popup.ts             — popup UI
+    theme.ts             — applies the theme early in <head> (avoids a flash of the wrong theme)
+  lib/                — shared logic, imported by the entry files
+    constants.ts, icons.ts, i18n.ts, regionNames.ts, alertReasons.ts,
+    regionUtils.ts, theme.ts, types.ts
+public/               — static files, copied into dist/ unchanged
+  manifest.json          — extension manifest (MV3)
+  popup.html/css
+  icons/                 — extension icons (PNG/SVG) for each status
+  _locales/              — translations: extension name/description (manifest) AND all UI text
+scripts/build.mjs     — esbuild config + copies public/ into dist/
+dist/                 — built extension (gitignored, generated by the build)
+release/              — packaged .zip files for the Chrome Web Store (gitignored)
+```
+
 ## Adding a translation
 
-All UI text (popup, notifications, toast) and the manifest fields (name, description) come from `_locales/<lang>/messages.json` — that's the single source of truth.
+All UI text (popup, notifications, toast) and the manifest fields (name, description) come from `public/_locales/<lang>/messages.json` — that's the single source of truth.
 
 To add a new language:
 
-1. Copy `_locales/en/messages.json` to `_locales/<code>/messages.json` (e.g. `_locales/pl/messages.json`) and translate every `"message"` value. Also set `languageSelfName` — that language's own native name (e.g. `"Polski"`), shown in the language dropdown.
-2. Run `npm run sync-languages` — it scans `_locales/` and regenerates `_locales/languages.json`.
-3. Done — the language shows up in Settings automatically, and `t()` picks up the new strings with no JS/HTML changes. `npm run build` runs `sync-languages` for you.
+1. Copy `public/_locales/en/messages.json` to `public/_locales/<code>/messages.json` (e.g. `public/_locales/pl/messages.json`) and translate every `"message"` value. Also set `languageSelfName` — that language's own native name (e.g. `"Polski"`), shown in the language dropdown.
+2. Run `npm run sync-languages` — it scans `public/_locales/` and regenerates `public/_locales/languages.json`.
+3. Done — the language shows up in Settings automatically, and `t()` picks up the new strings with no code changes. `npm run build` runs `sync-languages` for you.
 
-`_locales/languages.json` is generated — don't edit it by hand.
+`public/_locales/languages.json` is generated — don't edit it by hand.
 
 ## License
 

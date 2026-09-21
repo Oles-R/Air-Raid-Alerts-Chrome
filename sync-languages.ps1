@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $root = $PSScriptRoot
-$localesDir = Join-Path $root "_locales"
+$localesDir = Join-Path $root "public/_locales"
 
 $languages = Get-ChildItem -Path $localesDir -Directory |
     Where-Object { Test-Path (Join-Path $_.FullName "messages.json") } |

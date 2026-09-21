@@ -1,4 +1,11 @@
-importScripts('constants.js', 'i18n.js', 'regionNames.js', 'regionUtils.js');
+import {
+  PROXY_URL, RETRY_DELAY_MIN, NOTIFICATION_ID,
+  ALERT_LEVEL_COLORS, STATUS_ICON_PATHS
+} from '../lib/constants';
+import { resolveAndLoadLanguage, t } from '../lib/i18n';
+import { translateRegionName } from '../lib/regionNames';
+import { isRegionMonitored } from '../lib/regionUtils';
+import type { RegionState, SnapshotPayload, RuntimeMessage, ToastPayload } from '../lib/types';
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.alarms.create('fetchAlerts', { periodInMinutes: 1 });
@@ -11,7 +18,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request: RuntimeMessage) => {
   if (request.action === 'forceUpdate') {
     // Cancel pending retry — fetch immediately
     chrome.alarms.clear('retryFetch');
@@ -21,7 +28,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ── Helper: schedule a retry after RETRY_DELAY_MIN minutes ──────────────────
-function scheduleRetry() {
+function scheduleRetry(): void {
   const retryAt = Date.now() + RETRY_DELAY_MIN * 60 * 1000;
   chrome.storage.local.set({ retryAt });
   // Cancel any existing retry alarm before creating a new one
@@ -30,17 +37,23 @@ function scheduleRetry() {
   });
 }
 
-function setAttentionBadge() {
+function setAttentionBadge(): void {
   chrome.action.setBadgeText({ text: '!' });
   chrome.action.setBadgeBackgroundColor({ color: ALERT_LEVEL_COLORS.Yellow });
   chrome.action.setIcon({ path: STATUS_ICON_PATHS.yellow });
 }
 
-async function fetchData() {
+interface NewAlert {
+  name: string;
+  isRed?: boolean;
+  isYellow?: boolean;
+}
+
+async function fetchData(): Promise<void> {
   chrome.storage.local.get(['previousStates', 'myRegion', 'notifyOnlyMine', 'customRegions', 'language'], async (result) => {
-    const myRegion = result.myRegion;
-    const notifyOnlyMine = result.notifyOnlyMine;
-    const customRegions = result.customRegions || [];
+    const myRegion: string | undefined = result.myRegion;
+    const notifyOnlyMine: boolean | undefined = result.notifyOnlyMine;
+    const customRegions: string[] = result.customRegions || [];
     const lang = await resolveAndLoadLanguage(result.language);
 
     try {
@@ -57,7 +70,7 @@ async function fetchData() {
         return;
       }
 
-      const payload = await response.json();
+      const payload: SnapshotPayload = await response.json();
       const current = payload.regions || {};
       const allRegionNames = payload.allRegionNames || [];
 
@@ -73,11 +86,11 @@ async function fetchData() {
         allRegionNames
       });
 
-      const prev = result.previousStates || {};
+      const prev: Record<string, RegionState> = result.previousStates || {};
 
       let globalActiveCount = 0;
       let myActiveCount = 0;
-      let newAlerts = [];
+      const newAlerts: NewAlert[] = [];
       let hasRedAlert = false;
       let hasYellowAlert = false;
       let myHasRedAlert = false;
@@ -132,10 +145,10 @@ async function fetchData() {
         const yellowAlerts = newAlerts.filter(a => a.isYellow && !a.isRed);
         const otherAlerts = newAlerts.filter(a => !a.isRed && !a.isYellow);
 
-        let notifTitle;
+        let notifTitle: string;
         let notifMessage = '';
 
-        const displayName = (a) => translateRegionName(lang, a.name);
+        const displayName = (a: NewAlert) => translateRegionName(lang, a.name);
 
         if (redAlerts.length > 0) {
           notifTitle = t(lang, 'notifTitleRed');
@@ -167,8 +180,8 @@ async function fetchData() {
         });
 
         // Show toast overlay on all active tabs
-        const toastLevel   = redAlerts.length > 0 ? 'red' : (yellowAlerts.length > 0 ? 'yellow' : 'generic');
-        const formatToastRegions = (alerts) =>
+        const toastLevel: ToastPayload['level'] = redAlerts.length > 0 ? 'red' : (yellowAlerts.length > 0 ? 'yellow' : 'generic');
+        const formatToastRegions = (alerts: NewAlert[]) =>
           alerts.slice(0, 5).map(displayName).join(', ') + (alerts.length > 5 ? t(lang, 'moreItemsSuffix', { n: alerts.length - 5 }) : '');
         const toastRegions = redAlerts.length > 0
           ? formatToastRegions(redAlerts)

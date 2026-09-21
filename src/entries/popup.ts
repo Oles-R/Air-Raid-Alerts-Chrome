@@ -1,4 +1,16 @@
-let currentLang = DEFAULT_LANGUAGE;
+import {
+  LOCALE_TAGS, GEOCODE_URL, ALERT_TYPE_ICONS, DEFAULT_ALERT_ICON_KEY,
+  ALERT_LEVEL_COLORS, ALERT_TYPE_COLORS
+} from '../lib/constants';
+import { ICONS } from '../lib/icons';
+import { DEFAULT_LANGUAGE, getLanguage, t, applyStaticI18n, LANGUAGE_LIST } from '../lib/i18n';
+import { translateRegionName } from '../lib/regionNames';
+import { translateAlertReason } from '../lib/alertReasons';
+import { isRegionMonitored } from '../lib/regionUtils';
+import { resolveTheme, applyTheme } from '../lib/theme';
+import type { RegionState, AlertEntry } from '../lib/types';
+
+let currentLang: string = DEFAULT_LANGUAGE;
 
 document.addEventListener('DOMContentLoaded', () => {
     getLanguage((lang) => {
@@ -23,41 +35,41 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     }
 });
 
-let currentMyRegion = null;
-let customRegionsArr = [];
+let currentMyRegion: string | null = null;
+let customRegionsArr: string[] = [];
 
 // "5m", "1h 10m", "2d 3h 5m" — matching map.ukrainealarm.com's own format
-function formatElapsed(lang, fromDate) {
+function formatElapsed(lang: string, fromDate: Date): string {
     const totalMin = Math.max(0, Math.floor((Date.now() - fromDate.getTime()) / 60000));
     const days = Math.floor(totalMin / 1440);
     const hours = Math.floor((totalMin % 1440) / 60);
     const mins = totalMin % 60;
 
-    const parts = [];
+    const parts: string[] = [];
     if (days > 0) parts.push(`${days}${t(lang, 'days')}`);
     if (days > 0 || hours > 0) parts.push(`${hours}${t(lang, 'hours')}`);
     parts.push(`${mins}${t(lang, 'minutes')}`);
     return parts.join(' ');
 }
 
-function setupSettings() {
-    const settingsBtn = document.getElementById('settings-btn');
-    const closeSettingsBtn = document.getElementById('close-settings');
-    const settingsPanel = document.getElementById('settings-panel');
-    const saveBtn = document.getElementById('save-settings');
-    const saveStatus = document.getElementById('save-status');
-    const enableGeo = document.getElementById('enable-geo');
-    const notifyOnlyMine = document.getElementById('notify-only-mine');
-    const hideOthers = document.getElementById('hide-others');
-    const regionDisplay = document.getElementById('region-status-value');
-    const themeSelect = document.getElementById('theme-select');
-    const languageSelect = document.getElementById('language-select');
+function setupSettings(): void {
+    const settingsBtn = document.getElementById('settings-btn')!;
+    const closeSettingsBtn = document.getElementById('close-settings')!;
+    const settingsPanel = document.getElementById('settings-panel')!;
+    const saveBtn = document.getElementById('save-settings')!;
+    const saveStatus = document.getElementById('save-status')!;
+    const enableGeo = document.getElementById('enable-geo') as HTMLInputElement;
+    const notifyOnlyMine = document.getElementById('notify-only-mine') as HTMLInputElement;
+    const hideOthers = document.getElementById('hide-others') as HTMLInputElement;
+    const regionDisplay = document.getElementById('region-status-value')!;
+    const themeSelect = document.getElementById('theme-select') as HTMLSelectElement;
+    const languageSelect = document.getElementById('language-select') as HTMLSelectElement;
 
-    const addCustomBtn = document.getElementById('add-custom-region');
-    const customInput = document.getElementById('custom-region-input');
-    const customList = document.getElementById('custom-regions-list');
+    const addCustomBtn = document.getElementById('add-custom-region')!;
+    const customInput = document.getElementById('custom-region-input') as HTMLInputElement;
+    const customList = document.getElementById('custom-regions-list')!;
 
-    // Options beyond "system" come from _locales/languages.json (see i18n.js) —
+    // Options beyond "system" come from _locales/languages.json (see lib/i18n.ts) —
     // adding a new _locales/<lang>/messages.json + `npm run sync-languages` is
     // enough for it to show up here, no HTML/JS edits needed.
     LANGUAGE_LIST.forEach(({ code, name }) => {
@@ -119,7 +131,7 @@ function setupSettings() {
     });
 
     enableGeo.addEventListener('change', (e) => {
-        if (e.target.checked) {
+        if ((e.target as HTMLInputElement).checked) {
             regionDisplay.textContent = t(currentLang, 'regionDetecting');
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(async (position) => {
@@ -128,7 +140,7 @@ function setupSettings() {
                     try {
                         const res = await fetch(`${GEOCODE_URL}?latitude=${lat}&longitude=${lon}&localityLanguage=uk`);
                         const data = await res.json();
-                        let region = data.principalSubdivision || data.city;
+                        let region: string = data.principalSubdivision || data.city;
                         if (region === 'Київ') region = 'м. Київ';
                         else if (region === 'Севастополь') region = 'м. Севастополь';
 
@@ -142,15 +154,15 @@ function setupSettings() {
                         });
                     } catch (err) {
                         regionDisplay.textContent = t(currentLang, 'regionDetectError');
-                        e.target.checked = false;
+                        (e.target as HTMLInputElement).checked = false;
                     }
-                }, (error) => {
+                }, () => {
                     regionDisplay.textContent = t(currentLang, 'regionAccessDenied');
-                    e.target.checked = false;
+                    (e.target as HTMLInputElement).checked = false;
                 });
             } else {
                 regionDisplay.textContent = t(currentLang, 'regionNotSupported');
-                e.target.checked = false;
+                (e.target as HTMLInputElement).checked = false;
             }
         } else {
             regionDisplay.textContent = t(currentLang, 'regionNotDetermined');
@@ -181,10 +193,10 @@ function setupSettings() {
 // The list of all region names for autocomplete is refreshed server-side by
 // the proxy Worker once a day, together with the alert data — this just reads
 // the already-cached list from storage, no network request of its own.
-function populateRegionsDatalist() {
+function populateRegionsDatalist(): void {
     chrome.storage.local.get(['allRegionNames'], (result) => {
-        const names = result.allRegionNames || [];
-        const datalist = document.getElementById('regions-datalist');
+        const names: string[] = result.allRegionNames || [];
+        const datalist = document.getElementById('regions-datalist')!;
         datalist.innerHTML = '';
         names.slice().sort((a, b) => a.localeCompare(b, LOCALE_TAGS[currentLang])).forEach(name => {
             const option = document.createElement('option');
@@ -194,7 +206,7 @@ function populateRegionsDatalist() {
     });
 }
 
-function renderCustomRegions(listElement) {
+function renderCustomRegions(listElement: HTMLElement): void {
     listElement.innerHTML = '';
     customRegionsArr.forEach((cr, index) => {
         const li = document.createElement('li');
@@ -215,7 +227,7 @@ function renderCustomRegions(listElement) {
 // automatic region detection, the change is only visible in this popup
 // session until someone clicks "Save" again, while background.js keeps
 // working off the old list.
-function persistCustomRegions() {
+function persistCustomRegions(): void {
     chrome.storage.local.set({ customRegions: customRegionsArr }, () => {
         chrome.runtime.sendMessage({ action: 'forceUpdate' });
         setTimeout(loadData, 500);
@@ -223,9 +235,9 @@ function persistCustomRegions() {
 }
 
 // ── Countdown timer in error block ──────────────────────────────────────────
-let _countdownInterval = null;
+let _countdownInterval: ReturnType<typeof setInterval> | undefined;
 
-function showErrorWithCountdown(lang, el, errorText, retryAt) {
+function showErrorWithCountdown(lang: string, el: HTMLElement, errorText: string, retryAt: number | null): void {
     clearInterval(_countdownInterval);
 
     function render() {
@@ -253,12 +265,12 @@ function showErrorWithCountdown(lang, el, errorText, retryAt) {
     }
 }
 
-function loadData() {
+function loadData(): void {
 
     chrome.storage.local.get(['lastData', 'lastUpdate', 'apiError', 'apiErrorParams', 'dataStale', 'retryAt', 'myRegion', 'customRegions', 'hideOthers'], (result) => {
-        const loader = document.getElementById('loader');
-        const errorMsg = document.getElementById('error-message');
-        const list = document.getElementById('regions-list');
+        const loader = document.getElementById('loader')!;
+        const errorMsg = document.getElementById('error-message')!;
+        const list = document.getElementById('regions-list')!;
 
         loader.classList.add('hidden');
 
@@ -280,20 +292,32 @@ function loadData() {
     });
 }
 
-function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dataStale) {
-    const list = document.getElementById('regions-list');
+interface RegionDisplayItem {
+    name: string;
+    data: RegionState;
+    isMonitored: boolean;
+    displayName?: string;
+}
+
+function renderData(
+    states: Record<string, RegionState>,
+    lastUpdate: number,
+    myRegion: string | undefined,
+    customRegions: string[],
+    hideOthers: boolean | undefined,
+    dataStale: boolean | undefined
+): void {
+    const list = document.getElementById('regions-list')!;
     list.classList.remove('hidden');
     list.innerHTML = '';
 
     const updateDate = new Date(lastUpdate);
-    document.getElementById('last-update').textContent =
+    document.getElementById('last-update')!.textContent =
         updateDate.toLocaleTimeString(LOCALE_TAGS[currentLang]) + (dataStale ? ` ${t(currentLang, 'staleNotice')}` : '');
 
-    let activeCount = 0;
-
     // Convert to array and filter out non-States unless it's a monitored custom region
-    let regionsToDisplay = [];
-    let processedNames = new Set();
+    const regionsToDisplay: RegionDisplayItem[] = [];
+    const processedNames = new Set<string>();
 
     Object.entries(states).forEach(([name, data]) => {
         const isMonitored = isRegionMonitored(name, myRegion, customRegions);
@@ -339,13 +363,11 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
         if (a.data.alertnow && !b.data.alertnow) return -1;
         if (!a.data.alertnow && b.data.alertnow) return 1;
 
-        return a.displayName.localeCompare(b.displayName, LOCALE_TAGS[currentLang]);
+        return (a.displayName as string).localeCompare(b.displayName as string, LOCALE_TAGS[currentLang]);
     });
 
     regionsToDisplay.forEach((itemInfo) => {
         const {displayName, data, isMonitored} = itemInfo;
-
-        if (data.alertnow && data.type === 'State') activeCount++;
 
         const item = document.createElement('li');
         item.className = `region-item ${data.alertnow ? 'active' : ''}`;
@@ -354,9 +376,9 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
         let firstIconKey = DEFAULT_ALERT_ICON_KEY;
 
         if (data.alertnow && data.alerts) {
-            data.alerts.forEach((alert, idx) => {
+            data.alerts.forEach((alert: AlertEntry, idx: number) => {
                 // API field is `alertType`, not `type`
-                const alertType = alert.alertType || alert.type;
+                const alertType = alert.alertType || alert.type || '';
 
                 const typeIconKey = ALERT_TYPE_ICONS[alertType] || DEFAULT_ALERT_ICON_KEY;
                 const typeName = t(currentLang, `alertType_${alertType}`) === `alertType_${alertType}`
@@ -364,17 +386,17 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
                     : t(currentLang, `alertType_${alertType}`);
                 if (idx === 0) firstIconKey = typeIconKey;
 
-                const addLine = (levelStr, text) => {
+                const addLine = (levelStr: string | null, text: string) => {
                     // The icon always matches the alert TYPE (as on map.ukrainealarm.com,
                     // which has a single glyph for air raid alerts) — level conveys color.
-                    const color = ALERT_LEVEL_COLORS[levelStr] || ALERT_TYPE_COLORS[alertType] || ALERT_LEVEL_COLORS.default;
+                    const color = (levelStr && ALERT_LEVEL_COLORS[levelStr]) || ALERT_TYPE_COLORS[alertType] || ALERT_LEVEL_COLORS.default;
                     alertLines += `<div class="alert-line" style="color:${color};"><span class="alert-line-icon">${ICONS[typeIconKey]}</span>${text}</div>`;
                 };
 
                 // If the alert was rolled up from a district/community into its
                 // oblast (server-side aggregation), show exactly where it's from,
                 // same as the official map's own detail view.
-                const withSource = (text) => alert.sourceRegionName ? `${text} — ${alert.sourceRegionName}` : text;
+                const withSource = (text: string) => alert.sourceRegionName ? `${text} — ${alert.sourceRegionName}` : text;
 
                 if (alert.activeAlertLevels && alert.activeAlertLevels.length > 0) {
                     alert.activeAlertLevels.forEach(levelInfo => {
@@ -419,9 +441,10 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
             regionsToDisplay.forEach(r => { if((r.data.type === 'State' || r.isMonitored) && r.data.alertnow) displayCount++; });
         }
 
-        document.getElementById('active-count').textContent = displayCount;
+        document.getElementById('active-count')!.textContent = String(displayCount);
 
-        const radar = document.querySelector('.radar');
+        const radar = document.querySelector('.radar') as HTMLElement | null;
+        if (!radar) return;
         if (displayCount > 0) {
             radar.style.animationPlayState = 'running';
             radar.style.backgroundColor = 'var(--alert-red)';

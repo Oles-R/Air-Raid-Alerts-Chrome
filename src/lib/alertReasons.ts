@@ -7,12 +7,14 @@
 // the original string for anything not in this map, so an unrecognized reason
 // still displays (untranslated) instead of disappearing. If a new reason shows
 // up in the wild, add it here and to both messages.json files.
-const ALERT_REASON_KEYS = {
+import { t } from './i18n';
+
+const ALERT_REASON_KEYS: Record<string, string> = {
   'Дронова загроза (жовтий рівень)': 'drone_yellow',
   'Ракетна загроза (червоний рівень)': 'missile_red'
 };
 
-function translateAlertReason(lang, reason) {
+export function translateAlertReason(lang: string, reason: string): string {
   const key = ALERT_REASON_KEYS[reason];
   return key ? t(lang, `alertReason_${key}`) : reason;
 }

@@ -1,3 +1,14 @@
+import { LOCALE_TAGS } from '../lib/constants';
+import { ICONS } from '../lib/icons';
+import { getLanguage, t } from '../lib/i18n';
+import type { RuntimeMessage, ToastPayload } from '../lib/types';
+
+declare global {
+  interface Window {
+    __ukraineAlarmToastInit?: boolean;
+  }
+}
+
 (() => {
   // Prevent double-injection
   if (window.__ukraineAlarmToastInit) return;
@@ -174,7 +185,7 @@
   `;
 
   // ── DOM setup ───────────────────────────────────────────────────────────────
-  function ensureContainer() {
+  function ensureContainer(): HTMLElement {
     let c = document.getElementById('ua-toast-container');
     if (!c) {
       c = document.createElement('div');
@@ -184,7 +195,7 @@
     return c;
   }
 
-  function injectStyles() {
+  function injectStyles(): void {
     if (document.getElementById('ua-toast-styles')) return;
     const s = document.createElement('style');
     s.id = 'ua-toast-styles';
@@ -193,7 +204,7 @@
   }
 
   // ── Show toast ──────────────────────────────────────────────────────────────
-  function showToast({ title, regions, level, duration = 10000 }) {
+  function showToast({ title, regions, level, duration = 10000 }: ToastPayload & { duration?: number }): void {
     injectStyles();
     const container = ensureContainer();
 
@@ -227,10 +238,10 @@
       });
 
       // Auto-dismiss
-      let dismissTimer = setTimeout(() => dismiss(toast), duration);
+      const dismissTimer = setTimeout(() => dismiss(toast), duration);
 
       // Click to dismiss
-      toast.querySelector('.ua-toast__close').addEventListener('click', (e) => {
+      toast.querySelector('.ua-toast__close')?.addEventListener('click', (e) => {
         e.stopPropagation();
         clearTimeout(dismissTimer);
         dismiss(toast);
@@ -244,14 +255,14 @@
     });
   }
 
-  function dismiss(toast) {
+  function dismiss(toast: HTMLElement): void {
     toast.classList.remove('ua-toast--visible');
     toast.classList.add('ua-toast--hiding');
     setTimeout(() => toast.remove(), 400);
   }
 
   // ── Listen for messages from background ─────────────────────────────────────
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg: RuntimeMessage) => {
     if (msg.action === 'showToast') {
       showToast(msg.payload);
     }

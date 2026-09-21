@@ -7,7 +7,9 @@
 // District/community-level names (~1600 of them) are NOT covered — there's no
 // practical way to hand-translate that many, so they fall back to their
 // original Ukrainian name in every UI language (see translateRegionName below).
-const REGION_NAME_KEYS = {
+import { t } from './i18n';
+
+const REGION_NAME_KEYS: Record<string, string> = {
   'Автономна Республіка Крим': 'crimea',
   'Вінницька область': 'vinnytska',
   'Волинська область': 'volynska',
@@ -39,7 +41,7 @@ const REGION_NAME_KEYS = {
 // Returns the localized name for a known oblast-level region, otherwise the
 // original (Ukrainian) name unchanged — a safe no-op for anything we don't
 // have a translation for, including every district/community.
-function translateRegionName(lang, name) {
+export function translateRegionName(lang: string, name: string): string {
   const key = REGION_NAME_KEYS[name];
   return key ? t(lang, `region_${key}`) : name;
 }
