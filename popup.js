@@ -57,6 +57,16 @@ function setupSettings() {
     const customInput = document.getElementById('custom-region-input');
     const customList = document.getElementById('custom-regions-list');
 
+    // Options beyond "system" come from _locales/languages.json (see i18n.js) —
+    // adding a new _locales/<lang>/messages.json + `npm run sync-languages` is
+    // enough for it to show up here, no HTML/JS edits needed.
+    LANGUAGE_LIST.forEach(({ code, name }) => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = name;
+        languageSelect.appendChild(opt);
+    });
+
     chrome.storage.local.get(['enableGeo', 'notifyOnlyMine', 'hideOthers', 'myRegion', 'customRegions', 'theme', 'language'], (result) => {
         if (result.enableGeo) enableGeo.checked = true;
         if (result.notifyOnlyMine) notifyOnlyMine.checked = true;

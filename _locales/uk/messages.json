@@ -1,11 +1,57 @@
 {
-  "extName": {
-    "message": "Повітряні Тривоги"
-  },
-  "extDescription": {
-    "message": "Моніторинг повітряних тривог у реальному часі через api.ukrainealarm.com"
-  },
-  "actionTitle": {
-    "message": "Повітряні Тривоги"
-  }
+  "extName": { "message": "Повітряні Тривоги" },
+  "extDescription": { "message": "Моніторинг повітряних тривог у реальному часі через api.ukrainealarm.com" },
+  "actionTitle": { "message": "Повітряні Тривоги" },
+
+  "languageSelfName": { "message": "Українська" },
+
+  "appName": { "message": "Повітряні Тривоги" },
+  "active": { "message": "активних" },
+  "lastUpdate": { "message": "Останнє оновлення:" },
+  "loading": { "message": "Завантаження даних..." },
+  "genericLoadError": { "message": "Помилка завантаження даних." },
+  "staleNotice": { "message": "(дані можуть бути неактуальними)" },
+  "source": { "message": "Джерело: api.ukrainealarm.com" },
+  "settingsTitle": { "message": "Налаштування" },
+  "settingsBtnTitle": { "message": "Налаштування" },
+  "closeBtnTitle": { "message": "Закрити" },
+  "enableGeoLabel": { "message": "Визначати мій регіон автоматично" },
+  "currentRegionPrefix": { "message": "Поточний регіон:" },
+  "notifyOnlyMineLabel": { "message": "Сповіщати ТІЛЬКИ про мій регіон/громади" },
+  "hideOthersLabel": { "message": "Приховати інші регіони зі списку" },
+  "addRegionLabel": { "message": "Додати регіон для спостереження (область, район чи громада):" },
+  "addRegionPlaceholder": { "message": "Напр. Київська область, Бучанська..." },
+  "addBtn": { "message": "Додати" },
+  "saveBtn": { "message": "Зберегти" },
+  "savedStatus": { "message": "Збережено!" },
+  "themeLabel": { "message": "Тема оформлення" },
+  "themeDark": { "message": "Темна" },
+  "themeLight": { "message": "Світла" },
+  "themeSystem": { "message": "Системна" },
+  "languageLabel": { "message": "Мова" },
+  "languageSystem": { "message": "Системна" },
+  "regionNotDetermined": { "message": "Не визначено" },
+  "regionDetecting": { "message": "Визначаємо..." },
+  "regionDetectError": { "message": "Помилка визначення" },
+  "regionAccessDenied": { "message": "Доступ заборонено" },
+  "regionNotSupported": { "message": "Не підтримується" },
+  "retryIn": { "message": "Повторна спроба через" },
+  "retryingNow": { "message": "Повторна спроба..." },
+  "errorServer": { "message": "Помилка сервера: {code}" },
+  "errorNetwork": { "message": "Помилка мережі" },
+  "ago": { "message": "тому" },
+  "days": { "message": "д" },
+  "hours": { "message": "год" },
+  "minutes": { "message": "хв" },
+  "alertType_AIR": { "message": "Повітряна тривога" },
+  "alertType_ARTILLERY": { "message": "Артобстріл" },
+  "alertType_URBAN_FIGHTS": { "message": "Вуличні бої" },
+  "alertType_CHEMICAL": { "message": "Хімічна небезпека" },
+  "alertType_NUCLEAR": { "message": "Радіаційна небезпека" },
+  "alertType_default": { "message": "Тривога" },
+  "notifTitleRed": { "message": "Червона тривога! (Ракети)" },
+  "notifTitleYellow": { "message": "Жовта тривога! (Дрони)" },
+  "notifTitleGeneric": { "message": "Нова повітряна тривога!" },
+  "yellowInlinePrefix": { "message": "Жовта: " },
+  "moreItemsSuffix": { "message": " та ще {n}" }
 }

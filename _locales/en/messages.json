@@ -1,11 +1,57 @@
 {
-  "extName": {
-    "message": "Air Raid Alerts"
-  },
-  "extDescription": {
-    "message": "Real-time monitoring of air raid alerts using api.ukrainealarm.com"
-  },
-  "actionTitle": {
-    "message": "Air Raid Alerts"
-  }
+  "extName": { "message": "Air Raid Alerts" },
+  "extDescription": { "message": "Real-time monitoring of air raid alerts using api.ukrainealarm.com" },
+  "actionTitle": { "message": "Air Raid Alerts" },
+
+  "languageSelfName": { "message": "English" },
+
+  "appName": { "message": "Air Raid Alerts" },
+  "active": { "message": "active" },
+  "lastUpdate": { "message": "Last update:" },
+  "loading": { "message": "Loading data..." },
+  "genericLoadError": { "message": "Failed to load data." },
+  "staleNotice": { "message": "(data may be outdated)" },
+  "source": { "message": "Source: api.ukrainealarm.com" },
+  "settingsTitle": { "message": "Settings" },
+  "settingsBtnTitle": { "message": "Settings" },
+  "closeBtnTitle": { "message": "Close" },
+  "enableGeoLabel": { "message": "Detect my region automatically" },
+  "currentRegionPrefix": { "message": "Current region:" },
+  "notifyOnlyMineLabel": { "message": "Notify ONLY about my region/community" },
+  "hideOthersLabel": { "message": "Hide other regions from the list" },
+  "addRegionLabel": { "message": "Add a region to watch (oblast, district or community):" },
+  "addRegionPlaceholder": { "message": "e.g. Kyivska oblast, Bucha..." },
+  "addBtn": { "message": "Add" },
+  "saveBtn": { "message": "Save" },
+  "savedStatus": { "message": "Saved!" },
+  "themeLabel": { "message": "Theme" },
+  "themeDark": { "message": "Dark" },
+  "themeLight": { "message": "Light" },
+  "themeSystem": { "message": "System" },
+  "languageLabel": { "message": "Language" },
+  "languageSystem": { "message": "System" },
+  "regionNotDetermined": { "message": "Not set" },
+  "regionDetecting": { "message": "Detecting..." },
+  "regionDetectError": { "message": "Detection error" },
+  "regionAccessDenied": { "message": "Access denied" },
+  "regionNotSupported": { "message": "Not supported" },
+  "retryIn": { "message": "Retrying in" },
+  "retryingNow": { "message": "Retrying..." },
+  "errorServer": { "message": "Server error: {code}" },
+  "errorNetwork": { "message": "Network error" },
+  "ago": { "message": "ago" },
+  "days": { "message": "d" },
+  "hours": { "message": "h" },
+  "minutes": { "message": "m" },
+  "alertType_AIR": { "message": "Air raid alert" },
+  "alertType_ARTILLERY": { "message": "Shelling" },
+  "alertType_URBAN_FIGHTS": { "message": "Urban combat" },
+  "alertType_CHEMICAL": { "message": "Chemical hazard" },
+  "alertType_NUCLEAR": { "message": "Radiation hazard" },
+  "alertType_default": { "message": "Alert" },
+  "notifTitleRed": { "message": "Red alert! (Missiles)" },
+  "notifTitleYellow": { "message": "Yellow alert! (Drones)" },
+  "notifTitleGeneric": { "message": "New air raid alert!" },
+  "yellowInlinePrefix": { "message": "Yellow: " },
+  "moreItemsSuffix": { "message": " and {n} more" }
 }

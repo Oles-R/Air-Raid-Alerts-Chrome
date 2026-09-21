@@ -37,12 +37,24 @@ popup.html/css/js      — інтерфейс попапа
 content.js             — спливаючі toast-сповіщення на сторінках
 constants.js           — спільні константи (URL, кольори, шляхи іконок)
 icons.js               — SVG-іконки типів тривог
-translations.js, i18n.js — локалізація (uk/en)
+i18n.js                 — завантаження перекладів і переклад тексту (t())
 theme.js               — перемикання теми оформлення
 regionUtils.js          — логіка визначення "мого регіону"
 icons/                  — іконки розширення (PNG) для різних статусів
-_locales/               — локалізація маніфесту (назва, опис)
+_locales/               — переклади: назва/опис розширення (маніфест) І весь текст інтерфейсу
 ```
+
+## Додавання нового перекладу
+
+Весь текст інтерфейсу (попап, сповіщення, toast) і поля маніфесту (назва, опис) беруться з `_locales/<код мови>/messages.json` — це єдине джерело перекладів.
+
+Щоб додати нову мову:
+
+1. Скопіюй `_locales/en/messages.json` у `_locales/<код>/messages.json` (напр. `_locales/pl/messages.json`) і перекладіть значення `"message"` для кожного ключа. Онови також `languageSelfName` — це власна назва мови (напр. `"Polski"`), вона показується у випадаючому списку.
+2. Виконай `npm run sync-languages` — скрипт просканує `_locales/` і перегенерує `_locales/languages.json`.
+3. Все — мова автоматично з'явиться у випадаючому списку налаштувань, а `t()` підхопить нові рядки без правок JS/HTML. `npm run build` викликає `sync-languages` автоматично.
+
+`_locales/languages.json` — згенерований файл, не редагуй його вручну.
 
 ## Дозволи розширення
 
@@ -90,6 +102,18 @@ This is an independent project and is **not** an official app or website of map.
 No setup is required to get started — the extension shows data right after installation. No API key needed: all api.ukrainealarm.com requests are made by the `air-raid-alerts-proxy-worker` proxy, and the extension just reads the already-aggregated result from it.
 
 Optionally, in Settings you can enable automatic region detection, add specific regions to watch, and pick a language/theme.
+
+## Adding a translation
+
+All UI text (popup, notifications, toast) and the manifest fields (name, description) come from `_locales/<lang>/messages.json` — that's the single source of truth.
+
+To add a new language:
+
+1. Copy `_locales/en/messages.json` to `_locales/<code>/messages.json` (e.g. `_locales/pl/messages.json`) and translate every `"message"` value. Also set `languageSelfName` — that language's own native name (e.g. `"Polski"`), shown in the language dropdown.
+2. Run `npm run sync-languages` — it scans `_locales/` and regenerates `_locales/languages.json`.
+3. Done — the language shows up in Settings automatically, and `t()` picks up the new strings with no JS/HTML changes. `npm run build` runs `sync-languages` for you.
+
+`_locales/languages.json` is generated — don't edit it by hand.
 
 ## License
 

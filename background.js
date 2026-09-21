@@ -1,4 +1,4 @@
-importScripts('constants.js', 'translations.js', 'i18n.js', 'regionUtils.js');
+importScripts('constants.js', 'i18n.js', 'regionUtils.js');
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.alarms.create('fetchAlerts', { periodInMinutes: 1 });
@@ -41,7 +41,7 @@ async function fetchData() {
     const myRegion = result.myRegion;
     const notifyOnlyMine = result.notifyOnlyMine;
     const customRegions = result.customRegions || [];
-    const lang = resolveLanguage(result.language);
+    const lang = await resolveAndLoadLanguage(result.language);
 
     try {
       // All aggregation (rolling district/community alerts up into their parent
