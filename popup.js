@@ -378,7 +378,8 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
 
                 if (alert.activeAlertLevels && alert.activeAlertLevels.length > 0) {
                     alert.activeAlertLevels.forEach(levelInfo => {
-                        addLine(levelInfo.alertLevel, withSource(levelInfo.reason || typeName));
+                        const reasonText = levelInfo.reason ? translateAlertReason(currentLang, levelInfo.reason) : typeName;
+                        addLine(levelInfo.alertLevel, withSource(reasonText));
                     });
                 } else if (alert.alertLevel) {
                     addLine(alert.alertLevel, withSource(typeName));

@@ -80,5 +80,8 @@
   "region_khmelnytska": { "message": "Хмельницька область" },
   "region_cherkaska": { "message": "Черкаська область" },
   "region_chernivetska": { "message": "Чернівецька область" },
-  "region_chernihivska": { "message": "Чернігівська область" }
+  "region_chernihivska": { "message": "Чернігівська область" },
+
+  "alertReason_drone_yellow": { "message": "Дронова загроза (жовтий рівень)" },
+  "alertReason_missile_red": { "message": "Ракетна загроза (червоний рівень)" }
 }

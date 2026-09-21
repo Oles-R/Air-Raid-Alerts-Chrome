@@ -80,5 +80,8 @@
   "region_khmelnytska": { "message": "Khmelnytskyi Oblast" },
   "region_cherkaska": { "message": "Cherkasy Oblast" },
   "region_chernivetska": { "message": "Chernivtsi Oblast" },
-  "region_chernihivska": { "message": "Chernihiv Oblast" }
+  "region_chernihivska": { "message": "Chernihiv Oblast" },
+
+  "alertReason_drone_yellow": { "message": "Drone threat (yellow level)" },
+  "alertReason_missile_red": { "message": "Missile threat (red level)" }
 }
