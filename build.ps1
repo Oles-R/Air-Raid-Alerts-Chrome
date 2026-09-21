@@ -16,7 +16,7 @@ if (Test-Path $dest) {
 
 $items = @(
     "manifest.json", "background.js", "content.js", "constants.js", "icons.js",
-    "i18n.js", "theme.js", "regionUtils.js",
+    "i18n.js", "regionNames.js", "alertReasons.js", "theme.js", "regionUtils.js",
     "popup.html", "popup.css", "popup.js", "icons", "_locales"
 ) | ForEach-Object { Join-Path $root $_ }
 

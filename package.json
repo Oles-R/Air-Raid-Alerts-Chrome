@@ -1,6 +1,6 @@
 {
   "name": "ukraine-air-raid-alerts",
-  "version": "1.4.2",
+  "version": "1.4.1",
   "description": "Chrome extension for real-time monitoring of air raid alerts in Ukraine (api.ukrainealarm.com)",
   "author": "Oleksandr Reshetnikov <aleksandr.reshetnikov@gmail.com>",
   "license": "MIT",
