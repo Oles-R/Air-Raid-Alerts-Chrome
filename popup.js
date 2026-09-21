@@ -72,7 +72,7 @@ function setupSettings() {
         if (result.notifyOnlyMine) notifyOnlyMine.checked = true;
         if (result.hideOthers) hideOthers.checked = true;
         if (result.myRegion) {
-            regionDisplay.textContent = translateRegionName(currentLang, result.myRegion);
+            regionDisplay.textContent = result.myRegion;
             currentMyRegion = result.myRegion;
         } else {
             regionDisplay.textContent = t(currentLang, 'regionNotDetermined');
@@ -132,7 +132,7 @@ function setupSettings() {
                         if (region === 'Київ') region = 'м. Київ';
                         else if (region === 'Севастополь') region = 'м. Севастополь';
 
-                        regionDisplay.textContent = translateRegionName(currentLang, region);
+                        regionDisplay.textContent = region;
                         currentMyRegion = region;
                         // Save immediately — otherwise background.js keeps using the
                         // old myRegion until someone clicks "Save" again.
@@ -330,8 +330,6 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
         }
     });
 
-    regionsToDisplay.forEach((item) => { item.displayName = translateRegionName(currentLang, item.name); });
-
     regionsToDisplay.sort((a, b) => {
         if (a.isMonitored && !b.isMonitored) return -1;
         if (!a.isMonitored && b.isMonitored) return 1;
@@ -339,11 +337,11 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
         if (a.data.alertnow && !b.data.alertnow) return -1;
         if (!a.data.alertnow && b.data.alertnow) return 1;
 
-        return a.displayName.localeCompare(b.displayName, LOCALE_TAGS[currentLang]);
+        return a.name.localeCompare(b.name, LOCALE_TAGS[currentLang]);
     });
 
     regionsToDisplay.forEach((itemInfo) => {
-        const {displayName, data, isMonitored} = itemInfo;
+        const {name, data, isMonitored} = itemInfo;
 
         if (data.alertnow && data.type === 'State') activeCount++;
 
@@ -378,8 +376,7 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
 
                 if (alert.activeAlertLevels && alert.activeAlertLevels.length > 0) {
                     alert.activeAlertLevels.forEach(levelInfo => {
-                        const reasonText = levelInfo.reason ? translateAlertReason(currentLang, levelInfo.reason) : typeName;
-                        addLine(levelInfo.alertLevel, withSource(reasonText));
+                        addLine(levelInfo.alertLevel, withSource(levelInfo.reason || typeName));
                     });
                 } else if (alert.alertLevel) {
                     addLine(alert.alertLevel, withSource(typeName));
@@ -402,7 +399,7 @@ function renderData(states, lastUpdate, myRegion, customRegions, hideOthers, dat
         item.innerHTML = `
             <div class="region-icon ${data.alertnow ? `region-icon--${iconLevelClass}` : 'region-icon--safe'}">${data.alertnow ? ICONS[iconKey] : ''}</div>
             <div class="region-info">
-                <div class="region-name">${isMonitored ? '⭐ ' : ''}${displayName}</div>
+                <div class="region-name">${isMonitored ? '⭐ ' : ''}${name}</div>
                 ${alertLines ? `<div class="region-alert-lines">${alertLines}</div>` : ''}
                 ${metaStr ? `<div class="region-meta">${metaStr}</div>` : ''}
             </div>
