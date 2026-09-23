@@ -3,6 +3,11 @@
 All notable changes to the extension. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 A version's section of this file automatically becomes the GitHub Release notes when a `vX.Y.Z` tag is pushed.
 
+## 1.5.3 — 2026-09-23
+
+### Changed
+- English is now the fallback language for browsers set to a language the extension doesn't support yet (previously Ukrainian).
+
 ## 1.5.2 — 2026-09-23
 
 ### Added
