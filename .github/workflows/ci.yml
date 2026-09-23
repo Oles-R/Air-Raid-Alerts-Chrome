@@ -1,0 +1,60 @@
+# Every push to main and every PR: full build (typecheck + compile + zip) plus
+# consistency checks, so a broken build is caught before a release tag is pushed.
+# The packaged zip is attached to the run as an artifact for manual testing.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # build.ps1 / sync-languages.ps1 call Windows PowerShell
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Check languages.json is in sync with _locales
+        shell: pwsh
+        run: |
+          git diff --exit-code -- public/_locales/languages.json
+          if ($LASTEXITCODE -ne 0) {
+            throw "public/_locales/languages.json is out of date - run 'npm run sync-languages' and commit it"
+          }
+
+      - name: Check versions and changelog
+        shell: pwsh
+        run: |
+          $manifestVersion = (Get-Content public/manifest.json -Raw | ConvertFrom-Json).version
+          $packageVersion = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($manifestVersion -ne $packageVersion) {
+            throw "manifest.json version $manifestVersion does not match package.json version $packageVersion"
+          }
+          $changelog = Get-Content CHANGELOG.md -Raw -Encoding UTF8
+          if ($changelog -notmatch "(?m)^## $([regex]::Escape($manifestVersion))\b") {
+            throw "CHANGELOG.md has no '## $manifestVersion' section"
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extension-${{ github.sha }}
+          path: release/*.zip
+          retention-days: 14
