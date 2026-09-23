@@ -1,7 +1,13 @@
 # Changelog
 
 All notable changes to the extension. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-A version's section of this file automatically becomes the GitHub Release notes when a `vX.Y.Z` tag is pushed.
+A version's section of this file automatically becomes the GitHub Release notes when that version lands on `main`.
+
+## 1.5.4 — 2026-09-23
+
+### Changed
+- New versions are tagged and published as GitHub Releases automatically when they land on `main`; no manual tag push needed.
+- CI and release workflows run on Node.js 24.
 
 ## 1.5.3 — 2026-09-23
 
