@@ -1,6 +1,6 @@
-import { LOCALE_TAGS } from '../lib/constants';
 import { ICONS } from '../lib/icons';
 import { getLanguage, t } from '../lib/i18n';
+import { formatTime } from '../lib/timeFormat';
 import type { RuntimeMessage, ToastPayload } from '../lib/types';
 
 declare global {
@@ -124,6 +124,7 @@ declare global {
       margin: 0 0 6px 0;
       line-height: 1.5;
       word-break: break-word;
+      white-space: pre-line;
     }
 
     .ua-toast__footer {
@@ -211,8 +212,8 @@ declare global {
     const variant = level === 'red' ? 'red' : level === 'yellow' ? 'yellow' : 'generic';
     const iconKey = (level === 'red' || level === 'yellow') ? 'air' : 'warning';
 
-    getLanguage((lang) => {
-      const now = new Date().toLocaleTimeString(LOCALE_TAGS[lang], { hour: '2-digit', minute: '2-digit' });
+    chrome.storage.local.get(['timeFormat'], ({ timeFormat }) => getLanguage((lang) => {
+      const now = formatTime(new Date(), lang, timeFormat, { hour: '2-digit', minute: '2-digit' });
 
       const toast = document.createElement('div');
       toast.className = `ua-toast ua-toast--${variant}`;
@@ -220,8 +221,8 @@ declare global {
       toast.innerHTML = `
         <div class="ua-toast__icon">${ICONS[iconKey]}</div>
         <div class="ua-toast__body">
-          <p class="ua-toast__title">${title}</p>
-          <p class="ua-toast__regions">${regions}</p>
+          <p class="ua-toast__title"></p>
+          <p class="ua-toast__regions"></p>
           <div class="ua-toast__footer">
             <span class="ua-toast__time">${now}</span>
             <button class="ua-toast__close" title="${t(lang, 'closeBtnTitle')}">✕</button>
@@ -229,6 +230,9 @@ declare global {
         </div>
         <div class="ua-toast__progress"></div>
       `;
+      // API-sourced text goes in via textContent — this runs on arbitrary pages
+      toast.querySelector('.ua-toast__title')!.textContent = title;
+      toast.querySelector('.ua-toast__regions')!.textContent = regions;
 
       container.appendChild(toast);
 
@@ -252,7 +256,7 @@ declare global {
         clearTimeout(dismissTimer);
         dismiss(toast);
       });
-    });
+    }));
   }
 
   function dismiss(toast: HTMLElement): void {

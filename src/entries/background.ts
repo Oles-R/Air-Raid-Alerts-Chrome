@@ -1,21 +1,46 @@
 import {
-  PROXY_URL, RETRY_DELAY_MIN, NOTIFICATION_ID,
+  PROXY_URL, RETRY_DELAY_MIN, UPDATE_CHECK_PERIOD_MIN, NOTIFICATION_ID,
   ALERT_LEVEL_COLORS, STATUS_ICON_PATHS
 } from '../lib/constants';
 import { resolveAndLoadLanguage, t } from '../lib/i18n';
 import { isRegionMonitored } from '../lib/regionUtils';
+import { getThreatLabels } from '../lib/threats';
 import type { RegionState, SnapshotPayload, RuntimeMessage, ToastPayload } from '../lib/types';
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
+  // Popup shows a "New" badge next to the version until the settings panel is opened
+  if (details.reason === 'update') chrome.storage.local.set({ unseenUpdate: true });
   chrome.alarms.create('fetchAlerts', { periodInMinutes: 1 });
+  chrome.alarms.create('checkUpdate', { periodInMinutes: UPDATE_CHECK_PERIOD_MIN });
   fetchData();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  checkForUpdate();
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'fetchAlerts' || alarm.name === 'retryFetch') {
     fetchData();
+  } else if (alarm.name === 'checkUpdate') {
+    checkForUpdate();
   }
 });
+
+// ── Auto-update ─────────────────────────────────────────────────────────────
+// Chrome downloads Web Store updates on its own, but only applies them once the
+// extension is idle — and a service worker woken every minute by the alarm
+// never is, so a new version could wait until the browser restarts. Reloading
+// right away applies it immediately; alarms and storage survive the reload.
+chrome.runtime.onUpdateAvailable.addListener(() => {
+  chrome.runtime.reload();
+});
+
+// Nudges Chrome to look for a new version sooner than its own schedule (hours).
+// Throttled by Chrome itself; unpacked/dev installs just get 'no_update'.
+function checkForUpdate(): void {
+  chrome.runtime.requestUpdateCheck().catch(() => {});
+}
 
 chrome.runtime.onMessage.addListener((request: RuntimeMessage) => {
   if (request.action === 'forceUpdate') {
@@ -46,6 +71,12 @@ interface NewAlert {
   name: string;
   isRed?: boolean;
   isYellow?: boolean;
+  threats: string[];
+}
+
+// "Київська область — Балістика, БПЛА" (just the name if the API gave no details)
+function formatAlertWithThreats(a: NewAlert): string {
+  return a.threats.length > 0 ? `${a.name} — ${a.threats.join(', ')}` : a.name;
 }
 
 async function fetchData(): Promise<void> {
@@ -112,12 +143,9 @@ async function fetchData(): Promise<void> {
 
         // Check if it's a NEW alert
         if (!prev[regionName] || !prev[regionName].alertnow) {
-          if (notifyOnlyMine) {
-            if (isMonitored) newAlerts.push({ name: regionName, isRed: entry.hasRed, isYellow: entry.hasYellow });
-          } else {
-            if (entry.type === 'State' || isMonitored) {
-              newAlerts.push({ name: regionName, isRed: entry.hasRed, isYellow: entry.hasYellow });
-            }
+          const shouldNotify = notifyOnlyMine ? isMonitored : (entry.type === 'State' || isMonitored);
+          if (shouldNotify) {
+            newAlerts.push({ name: regionName, isRed: entry.hasRed, isYellow: entry.hasYellow, threats: getThreatLabels(lang, entry) });
           }
         }
       });
@@ -149,19 +177,16 @@ async function fetchData(): Promise<void> {
 
         if (redAlerts.length > 0) {
           notifTitle = t(lang, 'notifTitleRed');
-          const names = redAlerts.slice(0, 3).map(a => a.name);
-          notifMessage = names.join(', ');
+          notifMessage = redAlerts.slice(0, 3).map(formatAlertWithThreats).join('\n');
           if (redAlerts.length > 3) notifMessage += t(lang, 'moreItemsSuffix', { n: redAlerts.length - 3 });
-          if (yellowAlerts.length > 0) notifMessage += `\n${t(lang, 'yellowInlinePrefix')}${yellowAlerts.slice(0, 2).map(a => a.name).join(', ')}`;
+          if (yellowAlerts.length > 0) notifMessage += `\n${t(lang, 'yellowInlinePrefix')}${yellowAlerts.slice(0, 2).map(formatAlertWithThreats).join('; ')}`;
         } else if (yellowAlerts.length > 0) {
           notifTitle = t(lang, 'notifTitleYellow');
-          const names = yellowAlerts.slice(0, 3).map(a => a.name);
-          notifMessage = names.join(', ');
+          notifMessage = yellowAlerts.slice(0, 3).map(formatAlertWithThreats).join('\n');
           if (yellowAlerts.length > 3) notifMessage += t(lang, 'moreItemsSuffix', { n: yellowAlerts.length - 3 });
         } else {
           notifTitle = t(lang, 'notifTitleGeneric');
-          const names = otherAlerts.slice(0, 3).map(a => a.name);
-          notifMessage = names.join(', ');
+          notifMessage = otherAlerts.slice(0, 3).map(formatAlertWithThreats).join('\n');
           if (otherAlerts.length > 3) notifMessage += t(lang, 'moreItemsSuffix', { n: otherAlerts.length - 3 });
         }
 
@@ -179,7 +204,7 @@ async function fetchData(): Promise<void> {
         // Show toast overlay on all active tabs
         const toastLevel: ToastPayload['level'] = redAlerts.length > 0 ? 'red' : (yellowAlerts.length > 0 ? 'yellow' : 'generic');
         const formatToastRegions = (alerts: NewAlert[]) =>
-          alerts.slice(0, 5).map(a => a.name).join(', ') + (alerts.length > 5 ? t(lang, 'moreItemsSuffix', { n: alerts.length - 5 }) : '');
+          alerts.slice(0, 5).map(formatAlertWithThreats).join('\n') +(alerts.length > 5 ? t(lang, 'moreItemsSuffix', { n: alerts.length - 5 }) : '');
         const toastRegions = redAlerts.length > 0
           ? formatToastRegions(redAlerts)
           : yellowAlerts.length > 0

@@ -1,11 +1,13 @@
 import {
   LOCALE_TAGS, GEOCODE_URL, ALERT_TYPE_ICONS, DEFAULT_ALERT_ICON_KEY,
-  ALERT_LEVEL_COLORS, ALERT_TYPE_COLORS
+  ALERT_LEVEL_COLORS, ALERT_TYPE_COLORS, CHANGELOG_URL
 } from '../lib/constants';
 import { ICONS } from '../lib/icons';
 import { DEFAULT_LANGUAGE, getLanguage, t, applyStaticI18n, LANGUAGE_LIST } from '../lib/i18n';
 import { isRegionMonitored } from '../lib/regionUtils';
 import { resolveTheme, applyTheme } from '../lib/theme';
+import { formatTime } from '../lib/timeFormat';
+import { alertTypeName } from '../lib/threats';
 import type { RegionState, AlertEntry } from '../lib/types';
 
 let currentLang: string = DEFAULT_LANGUAGE;
@@ -25,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // fresh data in storage, stale picture on screen).
 chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'local') return;
-    if (changes.lastData || changes.apiError || changes.lastUpdate) {
+    if (changes.lastData || changes.apiError || changes.lastUpdate || changes.timeFormat) {
         loadData();
     }
     if (changes.allRegionNames) {
@@ -62,6 +64,12 @@ function setupSettings(): void {
     const regionDisplay = document.getElementById('region-status-value')!;
     const themeSelect = document.getElementById('theme-select') as HTMLSelectElement;
     const languageSelect = document.getElementById('language-select') as HTMLSelectElement;
+    const timeFormatSelect = document.getElementById('time-format-select') as HTMLSelectElement;
+
+    const appVersion = document.getElementById('app-version') as HTMLAnchorElement;
+    const newBadge = document.getElementById('new-badge')!;
+    appVersion.textContent = `v${chrome.runtime.getManifest().version}`;
+    appVersion.href = CHANGELOG_URL;
 
     const addCustomBtn = document.getElementById('add-custom-region')!;
     const customInput = document.getElementById('custom-region-input') as HTMLInputElement;
@@ -77,7 +85,7 @@ function setupSettings(): void {
         languageSelect.appendChild(opt);
     });
 
-    chrome.storage.local.get(['enableGeo', 'notifyOnlyMine', 'hideOthers', 'myRegion', 'customRegions', 'theme', 'language'], (result) => {
+    chrome.storage.local.get(['enableGeo', 'notifyOnlyMine', 'hideOthers', 'myRegion', 'customRegions', 'theme', 'language', 'timeFormat', 'unseenUpdate'], (result) => {
         if (result.enableGeo) enableGeo.checked = true;
         if (result.notifyOnlyMine) notifyOnlyMine.checked = true;
         if (result.hideOthers) hideOthers.checked = true;
@@ -93,10 +101,20 @@ function setupSettings(): void {
         }
         themeSelect.value = result.theme || 'system';
         languageSelect.value = result.language || 'system';
+        timeFormatSelect.value = result.timeFormat || 'system';
+        if (result.unseenUpdate) {
+            settingsBtn.classList.add('has-update');
+            newBadge.classList.remove('hidden');
+        }
         populateRegionsDatalist();
     });
 
-    settingsBtn.addEventListener('click', () => settingsPanel.classList.remove('hidden'));
+    settingsBtn.addEventListener('click', () => {
+        settingsPanel.classList.remove('hidden');
+        // The badge next to the version stays visible for this popup session
+        settingsBtn.classList.remove('has-update');
+        chrome.storage.local.set({ unseenUpdate: false });
+    });
     closeSettingsBtn.addEventListener('click', () => settingsPanel.classList.add('hidden'));
 
     themeSelect.addEventListener('change', () => {
@@ -112,6 +130,11 @@ function setupSettings(): void {
                 loadData();
             });
         });
+    });
+
+    // storage.onChanged re-renders the list with the new format
+    timeFormatSelect.addEventListener('change', () => {
+        chrome.storage.local.set({ timeFormat: timeFormatSelect.value });
     });
 
     addCustomBtn.addEventListener('click', () => {
@@ -265,7 +288,7 @@ function showErrorWithCountdown(lang: string, el: HTMLElement, errorText: string
 
 function loadData(): void {
 
-    chrome.storage.local.get(['lastData', 'lastUpdate', 'apiError', 'apiErrorParams', 'dataStale', 'retryAt', 'myRegion', 'customRegions', 'hideOthers'], (result) => {
+    chrome.storage.local.get(['lastData', 'lastUpdate', 'apiError', 'apiErrorParams', 'dataStale', 'retryAt', 'myRegion', 'customRegions', 'hideOthers', 'timeFormat'], (result) => {
         const loader = document.getElementById('loader')!;
         const errorMsg = document.getElementById('error-message')!;
         const list = document.getElementById('regions-list')!;
@@ -283,7 +306,7 @@ function loadData(): void {
         }
 
         if (result.lastData && result.lastUpdate) {
-            renderData(result.lastData, result.lastUpdate, result.myRegion, result.customRegions || [], result.hideOthers, result.dataStale);
+            renderData(result.lastData, result.lastUpdate, result.myRegion, result.customRegions || [], result.hideOthers, result.dataStale, result.timeFormat);
         } else {
             setTimeout(loadData, 1000);
         }
@@ -302,7 +325,8 @@ function renderData(
     myRegion: string | undefined,
     customRegions: string[],
     hideOthers: boolean | undefined,
-    dataStale: boolean | undefined
+    dataStale: boolean | undefined,
+    timeFormat: string | undefined
 ): void {
     const list = document.getElementById('regions-list')!;
     list.classList.remove('hidden');
@@ -310,7 +334,7 @@ function renderData(
 
     const updateDate = new Date(lastUpdate);
     document.getElementById('last-update')!.textContent =
-        updateDate.toLocaleTimeString(LOCALE_TAGS[currentLang]) + (dataStale ? ` ${t(currentLang, 'staleNotice')}` : '');
+        formatTime(updateDate, currentLang, timeFormat, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + (dataStale ? ` ${t(currentLang, 'staleNotice')}` : '');
 
     // Convert to array and filter out non-States unless it's a monitored custom region
     const regionsToDisplay: RegionDisplayItem[] = [];
@@ -376,9 +400,7 @@ function renderData(
                 const alertType = alert.alertType || alert.type || '';
 
                 const typeIconKey = ALERT_TYPE_ICONS[alertType] || DEFAULT_ALERT_ICON_KEY;
-                const typeName = t(currentLang, `alertType_${alertType}`) === `alertType_${alertType}`
-                    ? (alertType || t(currentLang, 'alertType_default'))
-                    : t(currentLang, `alertType_${alertType}`);
+                const typeName = alertTypeName(currentLang, alertType);
                 if (idx === 0) firstIconKey = typeIconKey;
 
                 const addLine = (levelStr: string | null, text: string) => {
@@ -411,7 +433,7 @@ function renderData(
         let metaStr = '';
         if (data.alertnow && data.changed) {
             const changedDate = new Date(data.changed);
-            const timePart = changedDate.toLocaleTimeString(LOCALE_TAGS[currentLang], { hour: '2-digit', minute: '2-digit' });
+            const timePart = formatTime(changedDate, currentLang, timeFormat, { hour: '2-digit', minute: '2-digit' });
             metaStr = `${timePart} · ${formatElapsed(currentLang, changedDate)} ${t(currentLang, 'ago')}`;
         }
 

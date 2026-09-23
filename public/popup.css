@@ -355,6 +355,47 @@ footer {
   font-weight: 600;
 }
 
+.settings-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.app-version {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-decoration: none;
+}
+
+.app-version:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.new-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background-color: var(--primary);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+#settings-btn {
+  position: relative;
+}
+
+#settings-btn.has-update::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--primary);
+}
+
 .settings-body {
   padding: 20px;
   display: flex;

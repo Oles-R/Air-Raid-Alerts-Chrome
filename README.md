@@ -39,6 +39,14 @@
 
 `dist/` — це повністю готове, завантажуване розширення (те, що використовує "Завантажити розпаковане"). `release/*.zip` — той самий вміст, запакований для завантаження в Chrome Web Store.
 
+### Реліз
+
+1. Підняти `version` у `public/manifest.json` і `package.json`.
+2. Додати в `CHANGELOG.md` розділ `## X.Y.Z — дата` (англійською).
+3. Закомітити, поставити тег і запушити: `git tag vX.Y.Z && git push origin main vX.Y.Z`.
+4. GitHub Action (`.github/workflows/release.yml`) збере розширення і створить GitHub Release з zip-архівом і розділом з changelog як описом.
+5. Завантажити цей zip у Chrome Web Store Developer Dashboard (вручну).
+
 ## Налаштування
 
 Ніяких додаткових налаштувань для запуску не потрібно — розширення одразу після встановлення починає показувати дані. API-ключ не потрібен: усі запити до api.ukrainealarm.com виконує проксі-сервер `air-raid-alerts-proxy-worker` (окремий Cloudflare Worker), а розширення лише читає вже готовий, агрегований результат з нього.
@@ -143,6 +151,14 @@ The extension is written in TypeScript and bundled into plain JS with [esbuild](
 | `npm run package` | Zip the already-built `dist/` into `release/*.zip`, no recompile |
 
 `dist/` is a fully loadable extension (what "Load unpacked" points at). `release/*.zip` is the same content, packaged for the Chrome Web Store.
+
+### Releasing
+
+1. Bump `version` in `public/manifest.json` and `package.json`.
+2. Add a `## X.Y.Z — date` section to `CHANGELOG.md`.
+3. Commit, tag and push: `git tag vX.Y.Z && git push origin main vX.Y.Z`.
+4. The GitHub Action (`.github/workflows/release.yml`) builds the extension and creates a GitHub Release with the zip attached and that changelog section as notes.
+5. Upload the zip to the Chrome Web Store Developer Dashboard (manually).
 
 No setup is required to get started beyond the build — the extension shows data right after installation. No API key needed: all api.ukrainealarm.com requests are made by the `air-raid-alerts-proxy-worker` proxy, and the extension just reads the already-aggregated result from it.
 

@@ -8,6 +8,12 @@ export const GEOCODE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-cl
 
 export const RETRY_DELAY_MIN = 1.5;
 
+// Opened from the version label in the settings panel.
+export const CHANGELOG_URL = 'https://github.com/Oles-R/Air-Raid-Alerts-Chrome/blob/main/CHANGELOG.md';
+
+// How often background.ts asks Chrome to check the Web Store for a new version.
+export const UPDATE_CHECK_PERIOD_MIN = 360;
+
 // Fixed ID — a new notification always replaces the previous one instead of stacking up.
 export const NOTIFICATION_ID = 'ua-air-raid-alert';
 
